@@ -18,6 +18,8 @@ diesel = { version = "1.4.4", features = ["postgres"] }
 chrono = { version = "0.4.19", features = ["serde"] }
 figment = { version = "0.10.3", features= ["env"] }
 reqwest = { version = "0.11.2", features = ["json"] }
+slug = "0.1.4"
+serde_plain = "0.3.0"
 
 [dependencies.rocket]
 git = "https://github.com/SergioBenitez/Rocket"

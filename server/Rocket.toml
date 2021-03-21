@@ -1,2 +1,8 @@
 [default]
 port = 8001
+
+[database]
+username = "postgres"
+password = "postgres"
+port = 5432
+database = "host"
