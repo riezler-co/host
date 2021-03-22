@@ -1,0 +1,7 @@
+
+*.test.localhost:2016 {
+	handle_path /* {
+		rewrite * /serve/{path}?host={http.request.host}
+		reverse_proxy http://127.0.0.1:8001
+	}
+}

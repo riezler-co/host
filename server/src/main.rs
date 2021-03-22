@@ -4,6 +4,8 @@ mod config;
 mod cors;
 mod db;
 mod deployment;
+mod file;
+mod serve;
 mod site;
 
 use crate::auth::Auth;
@@ -38,6 +40,8 @@ async fn main() {
         .mount("/site", site::routes())
         .mount("/branch", branch::routes())
         .mount("/deployment", deployment::routes())
+        .mount("/file", file::routes())
+        .mount("/serve", serve::routes())
         .launch()
         .await;
 }

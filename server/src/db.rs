@@ -13,6 +13,7 @@ pub fn create_pool(config: &DbConfig) -> impl Fairing {
     let url = config.to_string();
 
     AdHoc::on_attach("Add DB pool", move |rocket| async move {
+        println!("DB: {:?}", url);
         let pool = PgPoolOptions::new()
             .max_connections(max_connections)
             .connect(&url)

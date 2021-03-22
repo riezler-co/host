@@ -6,7 +6,7 @@ create table if not exists files
 	, content bytea not null
 	, deployment_id uuid not null references deployments(id) on delete cascade
 	, size integer not null
-	, type text not null
+	, extension text not null
 	, unique(deployment_id, path)
 	, created_at timestamptz not null default now()
 	)

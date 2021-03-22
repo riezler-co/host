@@ -1,5 +1,6 @@
 use crate::db::Db;
-use crate::site::data::{NewSite, Site};
+use crate::site::data::Site;
+use types::NewSite;
 
 use rocket::http::Status;
 use rocket_contrib::json::Json;

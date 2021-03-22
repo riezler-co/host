@@ -1,13 +1,8 @@
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use sqlx::PgPool;
+use types::NewBranch;
 use uuid::Uuid;
-
-#[derive(Deserialize)]
-pub struct NewBranch {
-    pub name: String,
-    pub slug: String,
-}
 
 #[derive(Serialize)]
 pub struct Branch {

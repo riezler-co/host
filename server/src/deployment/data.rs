@@ -1,4 +1,5 @@
 use crate::branch::data::Branch;
+use types::DeploymentConfig;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -6,19 +7,6 @@ use serde_json;
 use serde_plain;
 use sqlx::PgPool;
 use uuid::Uuid;
-
-#[derive(Deserialize, Serialize)]
-pub struct Config {
-    pub entrypoint: Option<String>,
-    pub fallback: Option<String>,
-}
-
-#[derive(Deserialize)]
-pub struct NewDeployment {
-    pub site: String,
-    pub branch: String,
-    pub config: Config,
-}
 
 #[derive(sqlx::Type, Deserialize, Serialize)]
 pub enum DeploymentStatus {
@@ -37,7 +25,7 @@ pub struct Deployment {
     pub id: Uuid,
     pub version: i16,
     pub branch_id: Uuid,
-    pub config: Config,
+    pub config: DeploymentConfig,
     pub created_at: DateTime<Utc>,
     pub status: DeploymentStatus,
 }
@@ -55,7 +43,7 @@ impl Deployment {
     pub async fn create(
         pool: &PgPool,
         branch: &Uuid,
-        config: Config,
+        config: DeploymentConfig,
     ) -> Result<Deployment, sqlx::Error> {
         let config_json = serde_json::to_value(&config).unwrap();
         let status = serde_plain::to_string(&DeploymentStatus::InProgress).unwrap();

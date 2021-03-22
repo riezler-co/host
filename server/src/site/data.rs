@@ -1,13 +1,8 @@
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use sqlx::PgPool;
+use types::NewSite;
 use uuid::Uuid;
-
-#[derive(Deserialize)]
-pub struct NewSite {
-    name: String,
-    slug: String,
-}
 
 #[derive(Serialize)]
 pub struct Site {
