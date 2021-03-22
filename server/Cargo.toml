@@ -20,13 +20,14 @@ figment = { version = "0.10.3", features= ["env"] }
 reqwest = { version = "0.11.2", features = ["json"] }
 slug = "0.1.4"
 serde_plain = "0.3.0"
+types = { path = "../packages/types" }
 
 [dependencies.rocket]
 git = "https://github.com/SergioBenitez/Rocket"
 branch="master"
 
 [dependencies.sqlx]
-version = "0.4.2"
+version = "0.5.1"
 default-features = false
 features = [
 	"runtime-tokio-rustls",
