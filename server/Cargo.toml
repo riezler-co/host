@@ -42,3 +42,6 @@ features = [
 git = "https://github.com/SergioBenitez/Rocket"
 branch = "master"
 features = ["uuid"]
+
+[lib]
+path = "src/lib.rs"

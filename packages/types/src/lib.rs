@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct NewBranch {
     pub name: String,
     pub slug: String,
@@ -12,14 +12,14 @@ pub struct DeploymentConfig {
     pub fallback: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct NewDeployment {
     pub site: String,
     pub branch: String,
     pub config: DeploymentConfig,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct NewFile {
     pub path: String,
     pub content: Vec<u8>,
@@ -27,7 +27,7 @@ pub struct NewFile {
     pub extension: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct NewSite {
     pub name: String,
     pub slug: String,

@@ -6,3 +6,7 @@ username = "postgres"
 password = "postgres"
 port = 5432
 database = "host"
+
+[proxy]
+caddy="http://localhost:2019"
+host="localhost:2016"

@@ -8,7 +8,7 @@ use serde_plain;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-#[derive(sqlx::Type, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub enum DeploymentStatus {
     #[serde(rename = "in_progress")]
     InProgress,
