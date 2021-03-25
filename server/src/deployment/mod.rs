@@ -6,6 +6,8 @@ mod delete;
 mod get;
 mod list;
 
+pub use complete::Payload as CompletePayload;
+
 use rocket::Route;
 
 pub fn routes() -> Vec<Route> {

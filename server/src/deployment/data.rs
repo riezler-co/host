@@ -20,7 +20,7 @@ pub enum DeploymentStatus {
     Abort,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Deployment {
     pub id: Uuid,
     pub version: i16,
@@ -51,10 +51,13 @@ impl Deployment {
         let row = sqlx::query!(
             r#"
 				with next_version as (
-					select greatest(deployments.version, 0) as version
-						 , deployments.branch_id 
-					  from deployments
-					 where deployments.branch_id = $1
+					select greatest(deployments.version, 0) + 1 as version
+                         , branches.id as branch_id 
+                      from branches
+                      left join deployments on deployments.branch_id = branches.id
+                     where branches.id = $1
+                     order by version desc
+                     limit 1
 				)
 				insert into deployments(version, branch_id, config, status)
 				select next_version.version

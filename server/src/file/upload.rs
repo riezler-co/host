@@ -7,10 +7,10 @@ use rocket_contrib::json::Json;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Payload {
-    deployment: Uuid,
-    file: NewFile,
+    pub deployment: Uuid,
+    pub file: NewFile,
 }
 
 #[derive(Serialize)]

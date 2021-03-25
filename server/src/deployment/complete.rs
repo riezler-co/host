@@ -4,12 +4,12 @@ use crate::deployment::data::Deployment;
 
 use rocket::http::Status;
 use rocket_contrib::json::Json;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Payload {
-    deployment: Uuid,
+    pub deployment: Uuid,
 }
 
 #[post("/complete", data = "<body>")]

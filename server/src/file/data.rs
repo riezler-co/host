@@ -96,7 +96,7 @@ impl<'r> Responder<'r, 'static> for File {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
         let content_type = match ContentType::from_extension(&self.extension) {
             Some(ct) => ct,
-            None => ContentType::new("text", "html"),
+            None => ContentType::new("text", "plain"),
         };
 
         let last_modified = self.created_at.to_string();

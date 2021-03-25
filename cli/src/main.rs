@@ -1,3 +1,4 @@
+mod deploy;
 mod site;
 
 use clap::App;
@@ -8,6 +9,7 @@ async fn main() -> std::io::Result<()> {
         .version("1.0")
         .author("Michael Riezler. <michael@riezler.co>")
         .subcommand(site::app())
+        .subcommand(deploy::app())
         .get_matches();
 
     if let Some(site) = matches.subcommand_matches("site") {
@@ -36,6 +38,10 @@ async fn main() -> std::io::Result<()> {
                 _ => {}
             }
         };
+    };
+
+    if let Some(_) = matches.subcommand_matches("deploy") {
+        deploy::deploy().await;
     };
 
     Ok(())

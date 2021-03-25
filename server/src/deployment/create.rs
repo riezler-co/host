@@ -19,10 +19,16 @@ pub async fn handler(pool: Db<'_>, body: Json<NewDeployment>) -> Result<Json<Dep
 
     let branch = Branch::create_deployment(pool.inner(), &site, branch)
         .await
-        .map_err(|_| Status::InternalServerError)?;
+        .map_err(|err| {
+            println!("{:?}", err);
+            Status::InternalServerError
+        })?;
 
     Deployment::create(pool.inner(), &branch.id, deployment.config)
         .await
         .map(Json)
-        .map_err(|_| Status::InternalServerError)
+        .map_err(|err| {
+            println!("{:?}", err);
+            Status::InternalServerError
+        })
 }
