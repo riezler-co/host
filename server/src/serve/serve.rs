@@ -14,14 +14,23 @@ pub async fn handler(
 ) -> Result<Option<File>, Status> {
     let path = match path {
         Some(path) => path,
-        None => PathBuf::from("/"),
+        None => PathBuf::from("index.html"),
     };
 
-    let path = path.to_slash().unwrap();
+    let entrypoint = PathBuf::from("build").join(path);
+    let path = entrypoint.to_slash().unwrap();
 
     println!("PATH: {:?}", path);
 
-    File::serve(pool.inner(), &site, &branch, &path)
+    let file = File::serve(pool.inner(), &site, &branch, &path)
+        .await
+        .map_err(|_| Status::InternalServerError)?;
+
+    if file.is_some() {
+        return Ok(file);
+    }
+
+    File::serve(pool.inner(), &site, &branch, "build/index.html")
         .await
         .map_err(|_| Status::InternalServerError)
 }
