@@ -45,7 +45,12 @@ impl File {
         sqlx::query_as!(
             File,
             r#"
-    			select id, path, content, size, extension, created_at
+    			select id
+                     , path
+                     , content
+                     , size
+                     , extension
+                     , created_at
     			  from files
     			 where id = $1
     		"#,
@@ -85,7 +90,7 @@ impl File {
     		"#,
             site,
             branch,
-            path
+            path,
         )
         .fetch_optional(pool)
         .await

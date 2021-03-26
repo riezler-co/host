@@ -26,5 +26,8 @@ pub async fn handler(pool: Db<'_>, body: Json<Payload>) -> Result<Json<Response>
         .await
         .map(|file_id| Response { file_id })
         .map(Json)
-        .map_err(|_| Status::InternalServerError)
+        .map_err(|err| {
+            println!("{:?}", err);
+            Status::InternalServerError
+        })
 }

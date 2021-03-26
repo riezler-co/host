@@ -1,7 +1,10 @@
+mod config;
 mod deploy;
 mod site;
 
-use clap::App;
+use crate::config::Config;
+use clap::{App, Arg};
+use std::path::Path;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -10,7 +13,40 @@ async fn main() -> std::io::Result<()> {
         .author("Michael Riezler. <michael@riezler.co>")
         .subcommand(site::app())
         .subcommand(deploy::app())
+        .arg(
+            Arg::new("config")
+                .long("config")
+                .short('c')
+                .takes_value(true)
+                .default_value("hosting.toml")
+                .global(true),
+        )
+        .arg(
+            Arg::new("dir")
+                .long("dir")
+                .short('d')
+                .default_value(".")
+                .takes_value(true)
+                .required(false)
+                .global(true),
+        )
         .get_matches();
+
+    let root = matches.value_of("dir").unwrap();
+    let config_path = Path::new(&root).join(matches.value_of("config").unwrap());
+    let config_path = config_path.as_path().to_str().expect("invalid path");
+
+    println!("CONFIG: {:?}", config_path);
+
+    let config = match Config::new(config_path) {
+        Ok(config) => config,
+        Err(err) => {
+            println!("Error: Config");
+            panic!(err);
+        }
+    };
+
+    println!("{:?}", config);
 
     if let Some(site) = matches.subcommand_matches("site") {
         if let Some(subcommand) = site.subcommand() {
@@ -40,8 +76,10 @@ async fn main() -> std::io::Result<()> {
         };
     };
 
-    if let Some(_) = matches.subcommand_matches("deploy") {
-        deploy::deploy().await;
+    if let Some(args) = matches.subcommand_matches("deploy") {
+        let site = args.value_of("site").unwrap();
+        let branch = args.value_of("branch").unwrap();
+        deploy::deploy(config, root, site, branch).await;
     };
 
     Ok(())

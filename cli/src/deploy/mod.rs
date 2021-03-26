@@ -1,4 +1,7 @@
-use clap::App;
+use crate::config::Config;
+
+use clap::{App, Arg};
+use globset::{Glob, GlobSetBuilder};
 use path_slash::PathExt;
 use reqwest;
 use server::deployment::CompletePayload;
@@ -9,20 +12,30 @@ use std::path::Path;
 use types::{DeploymentConfig, NewDeployment, NewFile};
 use walkdir::WalkDir;
 
-pub async fn deploy() {
+pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
+    let server = config.server();
     let client = reqwest::Client::new();
 
+    let mut ignore = GlobSetBuilder::new();
+
+    config.ignore.iter().for_each(|pattern| {
+        let glob = Glob::new(&pattern).expect(&format!("Invald Glob Pattern: {}", pattern));
+        ignore.add(glob);
+    });
+
+    let ignore = ignore.build().unwrap();
+
     let new_deployemnt = NewDeployment {
-        site: String::from("fuuu"),
-        branch: String::from("production"),
+        site: site.to_string(),
+        branch: branch.to_string(),
         config: DeploymentConfig {
             fallback: None,
-            entrypoint: None,
+            entrypoint: Some(config.entrypoint),
         },
     };
 
     let res = client
-        .post("http://127.0.0.1:8001/deployment/create")
+        .post(&format!("{}/deployment/create", server))
         .json(&new_deployemnt)
         .send()
         .await;
@@ -49,7 +62,10 @@ pub async fn deploy() {
         }
     };
 
-    for entry in WalkDir::new("./") {
+    let dir = Path::new(root).join(&config.path);
+    let root_path = Path::new(root);
+
+    for entry in WalkDir::new(dir) {
         let entry = match entry {
             Ok(entry) => entry,
             Err(err) => {
@@ -68,16 +84,21 @@ pub async fn deploy() {
         let extension = Path::new(&os_path)
             .extension()
             .and_then(OsStr::to_str)
-            .unwrap();
+            .unwrap_or("");
 
         let mut path = os_path.to_slash().unwrap();
 
-        if path.starts_with(".") {
-            path.remove(0);
+        if ignore.is_match(&path) {
+            continue;
         }
 
-        if path.starts_with("/") {
-            path.remove(0);
+        if path.starts_with(&root_path.to_slash().unwrap()) {
+            let end = root.len();
+            let mut start = 0;
+            while start < end {
+                path.remove(0);
+                start = start + 1;
+            }
         }
 
         let content = fs::read(&os_path).unwrap();
@@ -87,7 +108,7 @@ pub async fn deploy() {
             content,
             size,
             extension: extension.to_string(),
-            path,
+            path: path,
         };
 
         let payload = Payload {
@@ -98,7 +119,7 @@ pub async fn deploy() {
         println!("Upload File {}", payload.file.path);
 
         let res = client
-            .post("http://127.0.0.1:8001/file/upload")
+            .post(&format!("{}/file/upload", server))
             .json(&payload)
             .send()
             .await;
@@ -114,7 +135,7 @@ pub async fn deploy() {
     };
 
     let res = client
-        .post("http://127.0.0.1:8001/deployment/complete")
+        .post(&format!("{}/deployment/complete", server))
         .json(&complete)
         .send()
         .await;
@@ -127,4 +148,18 @@ pub async fn deploy() {
 
 pub fn app() -> App<'static> {
     App::new("deploy")
+        .arg(
+            Arg::new("site")
+                .long("site")
+                .short('s')
+                .takes_value(true)
+                .required(true),
+        )
+        .arg(
+            Arg::new("branch")
+                .long("branch")
+                .short('b')
+                .takes_value(true)
+                .required(true),
+        )
 }

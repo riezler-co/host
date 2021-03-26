@@ -71,8 +71,8 @@ impl Branch {
                      , $3 as slug
                      , 1 as version
                   from site_info
-                on conflict (slug, site_id)
-                         do update set slug = excluded.slug
+                  on conflict (slug, site_id)
+                           do update set slug = excluded.slug
                 returning id, slug, name, version, site_id, created_at, updated_at, is_public
             "#,
             site,
