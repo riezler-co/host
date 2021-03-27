@@ -2,11 +2,18 @@ use chrono::{DateTime, Utc};
 use rocket::http::{ContentType, Header};
 use rocket::request::Request;
 use rocket::response::{self, Responder, Response};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::io::Cursor;
-use types::NewFile;
 use uuid::Uuid;
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct NewFile {
+    pub path: String,
+    pub content: Vec<u8>,
+    pub size: i32,
+    pub extension: String,
+}
 
 #[derive(Serialize)]
 pub struct File {

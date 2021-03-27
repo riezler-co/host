@@ -1,9 +1,8 @@
 use clap::{App, Arg};
 use dialoguer::{theme::ColorfulTheme, Select};
 use reqwest;
-use server::site::data::Site;
+use server::site::data::{NewSite, Site};
 use slug::slugify;
-use types::NewSite;
 
 pub async fn create(name: &str, slug: Option<&str>) -> Result<Site, reqwest::Error> {
     let slug = match slug {

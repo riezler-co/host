@@ -1,6 +1,5 @@
 use crate::db::Db;
-use crate::file::data::File;
-use types::NewFile;
+use crate::file::data::{File, NewFile};
 
 use rocket::http::Status;
 use rocket_contrib::json::Json;

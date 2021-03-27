@@ -6,10 +6,13 @@ use path_slash::PathExt;
 use reqwest;
 use server::deployment::CompletePayload;
 use server::{deployment::data::Deployment, file::Payload};
+use server::{
+    deployment::data::{DeploymentConfig, Fallbacks, NewDeployment},
+    file::data::NewFile,
+};
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
-use types::{DeploymentConfig, NewDeployment, NewFile};
 use walkdir::WalkDir;
 
 pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
@@ -29,8 +32,12 @@ pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
         site: site.to_string(),
         branch: branch.to_string(),
         config: DeploymentConfig {
-            fallback: None,
-            entrypoint: Some(config.entrypoint),
+            fallbacks: Fallbacks {
+                not_found: config.fallback.not_found,
+                spa: config.fallback.spa,
+            },
+            clean_urls: config.clean_urls,
+            spa: config.spa,
         },
     };
 
@@ -50,7 +57,8 @@ pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
     };
 
     if res.status().is_server_error() {
-        panic!("Something went wrong");
+        println!("Something went wrong");
+        panic!(res);
     }
 
     let deployment = match res.json::<Deployment>().await {
@@ -62,8 +70,9 @@ pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
         }
     };
 
-    let dir = Path::new(root).join(&config.path);
-    let root_path = Path::new(root);
+    let dir = Path::new(root).join(&config.path).join(&config.public);
+
+    let root_path = dir.clone();
 
     for entry in WalkDir::new(dir) {
         let entry = match entry {
@@ -81,25 +90,22 @@ pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
             continue;
         }
 
+        if ignore.is_match(&path) {
+            continue;
+        }
+
         let extension = Path::new(&os_path)
             .extension()
             .and_then(OsStr::to_str)
             .unwrap_or("");
 
-        let mut path = os_path.to_slash().unwrap();
-
-        if ignore.is_match(&path) {
-            continue;
-        }
-
-        if path.starts_with(&root_path.to_slash().unwrap()) {
-            let end = root.len();
-            let mut start = 0;
-            while start < end {
-                path.remove(0);
-                start = start + 1;
+        let path = match os_path.strip_prefix(&root_path) {
+            Ok(path) => path,
+            Err(err) => {
+                println!("Error: Path");
+                panic!(err)
             }
-        }
+        };
 
         let content = fs::read(&os_path).unwrap();
         let size = content.len() as i32;
@@ -108,7 +114,7 @@ pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
             content,
             size,
             extension: extension.to_string(),
-            path: path,
+            path: path.to_slash().unwrap(),
         };
 
         let payload = Payload {

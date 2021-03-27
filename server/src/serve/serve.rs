@@ -1,4 +1,5 @@
 use crate::db::Db;
+use crate::deployment::data::Deployment;
 use crate::file::data::File;
 
 use path_slash::PathExt;
@@ -12,13 +13,22 @@ pub async fn handler(
     branch: String,
     path: Option<PathBuf>,
 ) -> Result<Option<File>, Status> {
-    let path = match path {
-        Some(path) => path,
-        None => PathBuf::from("index.html"),
+    let config = match Deployment::config(pool.inner(), &site, &branch).await {
+        Err(_) => return Err(Status::InternalServerError),
+        Ok(config) => config,
     };
 
-    let entrypoint = PathBuf::from("build").join(path);
-    let path = entrypoint.to_slash().unwrap();
+    let path = path
+        .map(|path| {
+            if config.clean_urls && path.extension().is_none() {
+                path.join("index.html")
+            } else {
+                path
+            }
+        })
+        .unwrap_or_else(|| PathBuf::from("/"));
+
+    let path = path.to_slash().unwrap();
 
     println!("PATH: {:?}", path);
 
@@ -30,7 +40,13 @@ pub async fn handler(
         return Ok(file);
     }
 
-    File::serve(pool.inner(), &site, &branch, "build/index.html")
+    if config.spa == false {
+        return File::serve(pool.inner(), &site, &branch, &config.fallbacks.not_found)
+            .await
+            .map_err(|_| Status::InternalServerError);
+    }
+
+    File::serve(pool.inner(), &site, &branch, &config.fallbacks.spa)
         .await
         .map_err(|_| Status::InternalServerError)
 }

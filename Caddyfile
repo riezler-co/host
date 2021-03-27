@@ -5,3 +5,17 @@ dev.react.localhost:2016 {
 		reverse_proxy http://127.0.0.1:8001
 	}
 }
+
+dev.hugo.localhost:2016 {
+	handle_path /* {
+		rewrite * /serve{path}?site=hugo&branch=dev
+		reverse_proxy http://127.0.0.1:8001
+	}
+}
+
+dev.docusaurus.localhost:2016 {
+	handle_path /* {
+		rewrite * /serve{path}?site=docusaurus&branch=dev
+		reverse_proxy http://127.0.0.1:8001
+	}
+}

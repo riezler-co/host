@@ -1,6 +1,5 @@
-use crate::branch::data::Branch;
+use crate::branch::data::{Branch, NewBranch};
 use crate::db::Db;
-use types::NewBranch;
 
 use rocket::http::Status;
 use rocket_contrib::json::Json;

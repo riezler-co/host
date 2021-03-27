@@ -1,0 +1,6 @@
+public = "build"
+server = "http://127.0.0.1:8001"
+spa = false
+
+[fallback]
+not_found = "404.html"

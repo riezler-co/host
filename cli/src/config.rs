@@ -7,21 +7,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Config {
-    pub entrypoint: String,
+    pub public: String,
     pub path: String,
     pub ignore: Vec<String>,
     pub server: Option<String>,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Config {
-            entrypoint: "./".to_string(),
-            path: "./".to_string(),
-            ignore: vec![],
-            server: None,
-        }
-    }
+    pub clean_urls: bool,
+    pub spa: bool,
+    pub fallback: Fallbacks,
 }
 
 impl Config {
@@ -37,6 +29,20 @@ impl Config {
     }
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            public: "./".to_string(),
+            path: "./".to_string(),
+            ignore: vec![],
+            server: None,
+            clean_urls: true,
+            spa: false,
+            fallback: Fallbacks::default(),
+        }
+    }
+}
+
 // Make `Config` a provider itself for composability.
 impl Provider for Config {
     fn metadata(&self) -> Metadata {
@@ -49,5 +55,20 @@ impl Provider for Config {
 
     fn profile(&self) -> Option<Profile> {
         None
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Fallbacks {
+    pub spa: String,
+    pub not_found: String,
+}
+
+impl Default for Fallbacks {
+    fn default() -> Self {
+        Fallbacks {
+            spa: String::from("index.html"),
+            not_found: String::from("404.html"),
+        }
     }
 }

@@ -1,5 +1,4 @@
 use crate::branch::data::Branch;
-use types::DeploymentConfig;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -7,6 +6,26 @@ use serde_json;
 use serde_plain;
 use sqlx::PgPool;
 use uuid::Uuid;
+
+#[derive(Deserialize, Serialize)]
+pub struct NewDeployment {
+    pub site: String,
+    pub branch: String,
+    pub config: DeploymentConfig,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct Fallbacks {
+    pub spa: String,
+    pub not_found: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct DeploymentConfig {
+    pub fallbacks: Fallbacks,
+    pub clean_urls: bool,
+    pub spa: bool,
+}
 
 #[derive(Deserialize, Serialize)]
 pub enum DeploymentStatus {
@@ -180,5 +199,34 @@ impl Deployment {
         )
         .fetch_optional(pool)
         .await
+    }
+
+    pub async fn config(
+        pool: &PgPool,
+        site: &str,
+        branch: &str,
+    ) -> Result<DeploymentConfig, sqlx::Error> {
+        let row = sqlx::query!(
+            r#"
+                select config
+                  from sites
+                  
+                  join branches on branches.site_id = sites.id
+
+                  join deployments on deployments.branch_id = branches.id
+                                  and deployments.version = branches.version
+
+                 where sites.slug = $1
+                   and branches.slug = $2 
+            "#,
+            site,
+            branch
+        )
+        .fetch_one(pool)
+        .await?;
+
+        let config = row.config;
+        let config = serde_json::from_value(config.unwrap()).unwrap();
+        Ok(config)
     }
 }
