@@ -1,6 +1,15 @@
+[default]
 public = "build"
 server = "http://127.0.0.1:8001"
 spa = false
 
-[fallback]
+[default.fallback]
 not_found = "404.html"
+
+
+[storybook]
+public = "build-storybook"
+spa = true
+
+[storybook.fallback]
+spa = "spa.html"

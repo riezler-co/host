@@ -17,10 +17,11 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(path: &str) -> Result<Self, figment::Error> {
+    pub fn new(path: &str, profile: &str) -> Result<Self, figment::Error> {
         Figment::from(Config::default())
-            .merge(Toml::file(path))
+            .merge(Toml::file(path).nested())
             .merge(Env::prefixed("HOSTING_"))
+            .select(profile)
             .extract()
     }
 

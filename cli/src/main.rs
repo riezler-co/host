@@ -30,7 +30,17 @@ async fn main() -> std::io::Result<()> {
                 .required(false)
                 .global(true),
         )
+        .arg(
+            Arg::new("profile")
+                .long("profile")
+                .short('p')
+                .takes_value(true)
+                .default_value("default")
+                .global(true),
+        )
         .get_matches();
+
+    let profile = matches.value_of("profile").unwrap();
 
     let root = matches.value_of("dir").unwrap();
     let config_path = Path::new(&root).join(matches.value_of("config").unwrap());
@@ -38,7 +48,7 @@ async fn main() -> std::io::Result<()> {
 
     println!("CONFIG: {:?}", config_path);
 
-    let config = match Config::new(config_path) {
+    let config = match Config::new(config_path, &profile) {
         Ok(config) => config,
         Err(err) => {
             println!("Error: Config");
