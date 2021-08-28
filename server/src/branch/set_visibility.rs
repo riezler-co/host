@@ -2,7 +2,7 @@ use crate::branch::data::Branch;
 use crate::db::Db;
 
 use rocket::http::Status;
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -14,9 +14,7 @@ pub struct Payload {
 
 #[post("/set_visibility", data = "<body>")]
 pub async fn handler(pool: Db<'_>, body: Json<Payload>) -> Result<(), Status> {
-    let Payload { visibility, branch } = body.into_inner();
-
-    Branch::set_visibility(pool.inner(), &branch, visibility)
+    Branch::set_visibility(pool.inner(), &body.branch, body.visibility)
         .await
         .map_err(|_| Status::InternalServerError)
 }

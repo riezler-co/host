@@ -2,7 +2,7 @@ use crate::branch::data::{Branch, NewBranch};
 use crate::db::Db;
 
 use rocket::http::Status;
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -14,9 +14,7 @@ pub struct Payload {
 
 #[post("/update", data = "<body>")]
 pub async fn handler(pool: Db<'_>, body: Json<Payload>) -> Result<(), Status> {
-    let Payload { data, branch } = body.into_inner();
-
-    Branch::update(pool.inner(), &branch, data)
+    Branch::update(pool.inner(), &body.branch, &body.data)
         .await
         .map_err(|_| Status::InternalServerError)
 }

@@ -2,7 +2,7 @@ use crate::branch::data::Branch;
 use crate::db::Db;
 
 use rocket::http::Status;
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -13,9 +13,7 @@ pub struct Payload {
 
 #[post("/delete", data = "<body>")]
 pub async fn handler(pool: Db<'_>, body: Json<Payload>) -> Result<(), Status> {
-    let Payload { branch } = body.into_inner();
-
-    Branch::delete(pool.inner(), &branch)
+    Branch::delete(pool.inner(), &body.branch)
         .await
         .map_err(|_| Status::InternalServerError)
 }

@@ -14,13 +14,13 @@ pub struct NewDeployment {
     pub config: DeploymentConfig,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Fallbacks {
     pub spa: String,
     pub not_found: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct DeploymentConfig {
     pub fallbacks: Fallbacks,
     pub clean_urls: bool,

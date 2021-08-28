@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate rocket;
 
-pub mod auth;
 pub mod branch;
 pub mod config;
 pub mod cors;

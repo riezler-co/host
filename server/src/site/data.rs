@@ -33,7 +33,7 @@ impl Site {
         .await
     }
 
-    pub async fn create(pool: &PgPool, site: NewSite) -> Result<Site, sqlx::Error> {
+    pub async fn create(pool: &PgPool, site: &NewSite) -> Result<Site, sqlx::Error> {
         sqlx::query_as!(
             Site,
             r#"
@@ -48,7 +48,7 @@ impl Site {
         .await
     }
 
-    pub async fn update(pool: &PgPool, id: &Uuid, site: NewSite) -> Result<Site, sqlx::Error> {
+    pub async fn update(pool: &PgPool, id: &Uuid, site: &NewSite) -> Result<Site, sqlx::Error> {
         sqlx::query_as!(
             Site,
             r#"

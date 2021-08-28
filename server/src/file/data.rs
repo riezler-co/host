@@ -29,7 +29,7 @@ impl File {
     pub async fn create(
         pool: &PgPool,
         deployment: &Uuid,
-        file: NewFile,
+        file: &NewFile,
     ) -> Result<Uuid, sqlx::Error> {
         sqlx::query!(
             r#"

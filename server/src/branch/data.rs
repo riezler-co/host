@@ -40,7 +40,7 @@ impl Branch {
     pub async fn create(
         pool: &PgPool,
         site: &Uuid,
-        branch: NewBranch,
+        branch: &NewBranch,
     ) -> Result<Branch, sqlx::Error> {
         sqlx::query_as!(
             Branch,
@@ -88,7 +88,7 @@ impl Branch {
         .await
     }
 
-    pub async fn update(pool: &PgPool, id: &Uuid, branch: NewBranch) -> Result<(), sqlx::Error> {
+    pub async fn update(pool: &PgPool, id: &Uuid, branch: &NewBranch) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
     			update branches

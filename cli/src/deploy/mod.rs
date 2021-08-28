@@ -132,7 +132,7 @@ pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
 
         if let Err(err) = res {
             println!("Faild to upload file {}", payload.file.path);
-            println!("Error: {:?}", err);
+            panic!(err);
         }
     }
 

@@ -2,8 +2,8 @@ use crate::db::Db;
 use crate::site::data::Site;
 
 use rocket::http::Status;
-use rocket_contrib::json::Json;
-use rocket_contrib::uuid::Uuid;
+use rocket::serde::json::Json;
+use rocket::serde::uuid::Uuid;
 
 #[get("/get?<id>")]
 pub async fn handler(pool: Db<'_>, id: Uuid) -> Result<Json<Site>, Status> {
