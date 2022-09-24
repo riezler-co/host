@@ -1,10 +1,12 @@
-use crate::db::Db;
+use crate::auth::Auth;
 use crate::deployment::data::Deployment;
+use crate::error::ApiError;
+use crate::ApiResult;
 
-use rocket::http::Status;
 use rocket::serde::json::Json;
 use serde::Deserialize;
 use uuid::Uuid;
+use werkbank::rocket::Db;
 
 #[derive(Deserialize)]
 pub struct Payload {
@@ -12,8 +14,9 @@ pub struct Payload {
 }
 
 #[post("/abort", data = "<body>")]
-pub async fn handler(pool: Db<'_>, body: Json<Payload>) -> Result<(), Status> {
-    Deployment::abort(pool.inner(), &body.deployment)
+pub async fn handler(pool: Db, body: Json<Payload>, _auth: Auth) -> ApiResult<()> {
+    Deployment::abort(&pool, &body.deployment)
         .await
-        .map_err(|_| Status::InternalServerError)
+        .map(Json)
+        .map_err(ApiError::from)
 }

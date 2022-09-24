@@ -1,0 +1,17 @@
+[auth]
+api_keys=["fuu", "bar"]
+
+[server]
+port = 8001
+
+[database]
+database_url="postgres://postgres:postgres@localhost:6543/host3"
+
+[proxy]
+caddy="http://localhost:2019"
+host="localhost:2016"
+
+[otel]
+address="http://localhost:4317"
+log_level="info,_=off"
+log_format="default"

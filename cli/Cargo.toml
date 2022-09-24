@@ -1,5 +1,5 @@
 [package]
-name = "cli"
+name = "vulpo_host"
 version = "0.1.0"
 authors = ["Michael Riezler <michaelriezler@gmail.com>"]
 edition = "2018"
@@ -19,3 +19,4 @@ walkdir = "2"
 path-slash = "0.1.4"
 figment = { version = "0.10.3", features= ["env"] }
 globset = "0.4.6"
+dotenv = "0.15.0"

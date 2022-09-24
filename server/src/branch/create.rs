@@ -1,10 +1,12 @@
+use crate::auth::Auth;
 use crate::branch::data::{Branch, NewBranch};
-use crate::db::Db;
+use crate::error::ApiError;
+use crate::ApiResult;
 
-use rocket::http::Status;
 use rocket::serde::json::Json;
 use serde::Deserialize;
 use uuid::Uuid;
+use werkbank::rocket::Db;
 
 #[derive(Deserialize)]
 pub struct Payload {
@@ -13,9 +15,9 @@ pub struct Payload {
 }
 
 #[post("/create", data = "<body>")]
-pub async fn handler(pool: Db<'_>, body: Json<Payload>) -> Result<Json<Branch>, Status> {
-    Branch::create(pool.inner(), &body.site, &body.branch)
+pub async fn handler(pool: Db, body: Json<Payload>, _auth: Auth) -> ApiResult<Branch> {
+    Branch::create(&pool, &body.site, &body.branch)
         .await
         .map(Json)
-        .map_err(|_| Status::InternalServerError)
+        .map_err(ApiError::from)
 }

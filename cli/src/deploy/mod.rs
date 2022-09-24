@@ -15,9 +15,14 @@ use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
 
-pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
+pub async fn deploy(
+    config: &Config,
+    client: &reqwest::Client,
+    root: &str,
+    site: &str,
+    branch: &str,
+) {
     let server = config.server();
-    let client = reqwest::Client::new();
 
     let mut ignore = GlobSetBuilder::new();
 
@@ -33,8 +38,8 @@ pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
         branch: branch.to_string(),
         config: DeploymentConfig {
             fallbacks: Fallbacks {
-                not_found: config.fallback.not_found,
-                spa: config.fallback.spa,
+                not_found: config.fallback.not_found.clone(),
+                spa: config.fallback.spa.clone(),
             },
             clean_urls: config.clean_urls,
             spa: config.spa,
@@ -51,22 +56,20 @@ pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
         Ok(json) => json,
         Err(err) => {
             println!("Failed to create deployment");
-            println!("{:?}", err);
-            panic!(err);
+            panic!("{}", err);
         }
     };
 
     if res.status().is_server_error() {
         println!("Something went wrong");
-        panic!(res);
+        panic!("{}", res.text().await.unwrap());
     }
 
     let deployment = match res.json::<Deployment>().await {
         Ok(d) => d,
         Err(err) => {
             println!("Mismatched type, expected Deployment");
-            println!("{:?}", err);
-            panic!(err);
+            panic!("{:?}", err);
         }
     };
 
@@ -78,8 +81,8 @@ pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
         let entry = match entry {
             Ok(entry) => entry,
             Err(err) => {
-                println!("{:?}", err);
-                panic!("Entry Error");
+                println!("Entry Error");
+                panic!("{:?}", err);
             }
         };
 
@@ -103,7 +106,7 @@ pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
             Ok(path) => path,
             Err(err) => {
                 println!("Error: Path");
-                panic!(err)
+                panic!("{}", err)
             }
         };
 
@@ -132,7 +135,7 @@ pub async fn deploy(config: Config, root: &str, site: &str, branch: &str) {
 
         if let Err(err) = res {
             println!("Faild to upload file {}", payload.file.path);
-            panic!(err);
+            panic!("{}", err);
         }
     }
 

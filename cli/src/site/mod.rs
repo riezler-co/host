@@ -1,10 +1,19 @@
+use crate::config::Config;
+
 use clap::{App, Arg};
 use dialoguer::{theme::ColorfulTheme, Select};
 use reqwest;
 use server::site::data::{NewSite, Site};
 use slug::slugify;
 
-pub async fn create(name: &str, slug: Option<&str>) -> Result<Site, reqwest::Error> {
+pub async fn create(
+    config: &Config,
+    client: &reqwest::Client,
+    name: &str,
+    slug: Option<&str>,
+) -> Result<Site, reqwest::Error> {
+    let server = config.server();
+
     let slug = match slug {
         None => slugify(name.clone()),
         Some(slug) => slug.to_string(),
@@ -15,10 +24,8 @@ pub async fn create(name: &str, slug: Option<&str>) -> Result<Site, reqwest::Err
         slug: slug.to_string(),
     };
 
-    let client = reqwest::Client::new();
-
     client
-        .post("http://127.0.0.1:8001/site/create")
+        .post(&format!("{}/site/create", server))
         .json(&site)
         .send()
         .await?
@@ -26,15 +33,19 @@ pub async fn create(name: &str, slug: Option<&str>) -> Result<Site, reqwest::Err
         .await
 }
 
-pub async fn list() -> Result<Vec<Site>, reqwest::Error> {
-    reqwest::get("http://127.0.0.1:8001/site/list")
+pub async fn list(config: &Config, client: &reqwest::Client) -> Result<Vec<Site>, reqwest::Error> {
+    let server = config.server();
+
+    client
+        .get(&format!("{}/site/list", server))
+        .send()
         .await?
         .json::<Vec<Site>>()
         .await
 }
 
-pub async fn get() -> Result<Site, reqwest::Error> {
-    let sites = list().await?;
+pub async fn get(config: &Config, client: &reqwest::Client) -> Result<Site, reqwest::Error> {
+    let sites = list(config, client).await?;
     let selections: Vec<String> = sites.clone().iter().map(|site| site.slug.clone()).collect();
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Select site:")

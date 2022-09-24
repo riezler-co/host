@@ -1,10 +1,12 @@
-use crate::db::Db;
+use crate::auth::Auth;
+use crate::error::ApiError;
 use crate::file::data::{File, NewFile};
+use crate::ApiResult;
 
-use rocket::http::Status;
 use rocket::serde::json::Json;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use werkbank::rocket::Db;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Payload {
@@ -18,13 +20,10 @@ pub struct Response {
 }
 
 #[post("/upload", data = "<body>")]
-pub async fn handler(pool: Db<'_>, body: Json<Payload>) -> Result<Json<Response>, Status> {
-    File::create(pool.inner(), &body.deployment, &body.file)
+pub async fn handler(pool: Db, body: Json<Payload>, _auth: Auth) -> ApiResult<Response> {
+    File::create(&pool, &body.deployment, &body.file)
         .await
         .map(|file_id| Response { file_id })
         .map(Json)
-        .map_err(|err| {
-            println!("{:?}", err);
-            Status::InternalServerError
-        })
+        .map_err(ApiError::from)
 }

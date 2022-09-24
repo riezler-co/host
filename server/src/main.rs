@@ -1,23 +1,26 @@
-use server;
-use server::config::DbConfig;
-
 use figment::{
-    providers::{Env, Format, Serialized, Toml},
+    providers::{Env, Format, Toml},
     Figment,
 };
-use rocket::Config;
+use server;
+use server::{cli, migration};
+use werkbank::clap::{get_config_dir, run_migration, run_server};
+use werkbank::otel;
 
 #[rocket::main]
 async fn main() {
-    let figment = Figment::from(rocket::Config::default())
-        .merge(Serialized::defaults(Config::default()))
-        .merge(Toml::file("Rocket.toml").nested())
-        .merge(Env::prefixed("AUTH_").global());
+    let matches = cli::get_matches();
+    let file = get_config_dir(matches.get_one::<String>("config"));
+    let figment = Figment::new()
+        .merge(Toml::file(file).nested())
+        .merge(Env::prefixed("HOSTING_").global());
 
-    let db_config = figment.clone().select("database");
-    let db_config = db_config
-        .extract::<DbConfig>()
-        .expect("Invalid Database config");
+    if run_migration(&matches) {
+        migration::run(&figment).await;
+    }
 
-    server::start(&db_config).await;
+    if let Some(_) = run_server(&matches) {
+        otel::init("vulpo_host_server", &figment);
+        server::start(&figment).await;
+    }
 }

@@ -1,0 +1,867 @@
+{
+  "db": "PostgreSQL",
+  "1eb74cd57e5406c260efe152742cd050bb00be4dd158e845864816407676fd5a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "version",
+          "ordinal": 0,
+          "type_info": "Int2"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Int2"
+        ]
+      }
+    },
+    "query": "\n    \t\t\twith max_version as (\n    \t\t\t\tselect max(deployments.version) as version\n    \t\t\t\t  from deployments\n    \t\t\t\t where deployments.branch_id = $1\n    \t\t\t)\n    \t\t\tupdate branches\n    \t\t\t   set version = least($2, max_version.version)\n    \t\t\t  from max_version\n    \t\t\t where branches.id = $1\n    \t\t\treturning branches.version\n    \t\t"
+  },
+  "2a12d019aa2d2e6537b789d28eed2091c8e022f6e60b8000dcc720274e4817bb": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "version",
+          "ordinal": 1,
+          "type_info": "Int2"
+        },
+        {
+          "name": "branch_id",
+          "ordinal": 2,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Jsonb",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n\t\t\t\twith next_version as (\n\t\t\t\t\tselect greatest(deployments.version, 0) + 1 as version\n                         , branches.id as branch_id \n                      from branches\n                      left join deployments on deployments.branch_id = branches.id\n                     where branches.id = $1\n                     order by version desc\n                     limit 1\n\t\t\t\t)\n\t\t\t\tinsert into deployments(version, branch_id, config, status)\n\t\t\t\tselect next_version.version\n\t\t\t\t\t , $1 as branch_id\n\t\t\t\t\t , $2 as config\n\t\t\t\t\t , $3 as status\n\t\t\t\t  from next_version\n\t\t\t\treturning id, version, branch_id, created_at\n\t\t\t"
+  },
+  "3160682bb72821e141506d4da5a245eb7d7d1c0621aa97433f9f0c6d188bdc50": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "slug",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "version",
+          "ordinal": 3,
+          "type_info": "Int2"
+        },
+        {
+          "name": "site_id",
+          "ordinal": 4,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 6,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 7,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n                with site_info as (\n                    select id\n                      from sites\n                     where slug = $1 \n                )\n                insert into branches(site_id, name, slug, version)\n                select site_info.id as site_id\n                     , $2 as name\n                     , $3 as slug\n                     , 1 as version\n                  from site_info\n                  on conflict (slug, site_id)\n                           do update set slug = excluded.slug\n                returning id, slug, name, version, site_id, created_at, updated_at, is_public\n            "
+  },
+  "4944d7becfb6c700ff5a049e1c9be1dd6d76f613add71b673f03891d6d010604": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tupdate deployments\n    \t\t\t   set status = $2\n    \t\t\t where id = $1  \n    \t\t"
+  },
+  "4cf62ab75d955011d19a7cc46ae3c25a7fbf141c6efd85e859571703d20c2483": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tupdate branches\n    \t\t\t   set name = $2\n    \t\t\t     , slug = $3\n    \t\t\t where id = $1\n    \t\t"
+  },
+  "5669fb1321d5a9598bfc7ecef34377fe1df195a5cd61b46ccf11f9baac7e9fc8": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "slug",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tupdate sites\n    \t\t\t   set name = $2\n    \t\t\t     , slug = $3\n    \t\t\t where id = $1  \n    \t\t\treturning id, name, slug, updated_at, created_at\n    \t\t"
+  },
+  "6082688b2c1179a0d68f65ac94bc824ad5825c7041e55ed9820f7db739532538": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text",
+          "Bytea",
+          "Int4",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n\t\t\t\tinsert into files(deployment_id, path, content, size, extension)\n\t\t\t\tvalues($1, $2, $3, $4, $5)\n\t\t\t\treturning id\n\t\t\t"
+  },
+  "6a32451078c3243b1f7f39fba60e62fb79942e7410451d8770ec717a2cc13c16": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Bool"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tupdate branches\n    \t\t\t   set is_public = $2\n    \t\t\t where id = $1 \n    \t\t"
+  },
+  "7a72120d43d4e54d6a97d5e334573b04be1dbf2ac24a905fab6e4fa74c737354": {
+    "describe": {
+      "columns": [
+        {
+          "name": "config",
+          "ordinal": 0,
+          "type_info": "Jsonb"
+        }
+      ],
+      "nullable": [
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n                select config\n                  from sites\n                  \n                  join branches on branches.site_id = sites.id\n\n                  join deployments on deployments.branch_id = branches.id\n                                  and deployments.version = branches.version\n\n                 where sites.slug = $1\n                   and branches.slug = $2 \n            "
+  },
+  "87095fcf25909630e6dd3e0dc443575761a0cc07de5cb4ad325a97e64405cc92": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tdelete from deployments\n    \t\t\t where id = $1 \n    \t\t"
+  },
+  "88b3c987f24717469c670bd562c946d17be5fa1e325085278cd92b8f187840a2": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "slug",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "version",
+          "ordinal": 3,
+          "type_info": "Int2"
+        },
+        {
+          "name": "site_id",
+          "ordinal": 4,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 6,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 7,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tselect id, slug, name, version, site_id, created_at, updated_at, is_public\n    \t\t\t  from branches\n    \t\t\t where id = $1\n    \t\t"
+  },
+  "9c85c1f0eb56ca3dc7648e8f50e12f1c033bc567b471e0d2da9aa4ed3b38dcbc": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "version",
+          "ordinal": 1,
+          "type_info": "Int2"
+        },
+        {
+          "name": "config",
+          "ordinal": 2,
+          "type_info": "Jsonb"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "status",
+          "ordinal": 4,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        true,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tselect id\n\t\t\t\t\t , version\n\t\t\t\t\t , config\n\t\t\t\t\t , created_at\n\t\t\t\t\t , status\n\t\t\t\t  from deployments\n\t\t\t\t where branch_id = $1\n    \t\t"
+  },
+  "ade33ab1556ae1f3b75650401efce4a47fe78150fc434a26fbc59b57c4c8059d": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "slug",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "version",
+          "ordinal": 3,
+          "type_info": "Int2"
+        },
+        {
+          "name": "site_id",
+          "ordinal": 4,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 6,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 7,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n\t\t\t\tselect id, slug, name, version, site_id, created_at, updated_at, is_public\n\t\t\t\t  from branches\n\t\t\t\t where site_id = $1\n\t\t\t\t order by name asc \n\t\t\t"
+  },
+  "b3d351aa9bac8e1ccc6c9199fb6b5a26e78e32b7ab96c9e28a8b128a370aca0e": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tdelete from branches\n    \t\t\t where id = $1\n    \t\t"
+  },
+  "b9f4fb2a539761c0d16c4bcac35f54571957dec8950385d25cf4d7500d9db90a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "version",
+          "ordinal": 1,
+          "type_info": "Int2"
+        },
+        {
+          "name": "config",
+          "ordinal": 2,
+          "type_info": "Jsonb"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "status",
+          "ordinal": 4,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        true,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tselect id\n\t\t\t\t\t , version\n\t\t\t\t\t , config\n\t\t\t\t\t , created_at\n\t\t\t\t\t , status\n\t\t\t\t  from deployments\n\t\t\t\t where id = $1\n    \t\t"
+  },
+  "d0dd2deb2726807df0eff27651fe25ea5afc2d53c4fcd8759c0223a04e1c18e0": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "path",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "content",
+          "ordinal": 2,
+          "type_info": "Bytea"
+        },
+        {
+          "name": "size",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "extension",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tselect id\n                     , path\n                     , content\n                     , size\n                     , extension\n                     , created_at\n    \t\t\t  from files\n    \t\t\t where id = $1\n    \t\t"
+  },
+  "db0db278b9b51800df9c9c650742d19bbdd05f5313f088ad9db1cf281c5fde5c": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "slug",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n    \t\t\tselect id, name, slug, updated_at, created_at\n    \t\t\t  from sites\n    \t\t\t order by name asc\n    \t\t"
+  },
+  "e740ebdffa3dd69adcbbb52600bcc6f3f2180e46c5b4a323bb0e9a616a445dbc": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "slug",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tinsert into sites(name, slug)\n    \t\t\tvalues($1, $2)\n    \t\t\treturning id, name, slug, updated_at, created_at\n    \t\t"
+  },
+  "f57959f0c751a02b8470df6141d08f5a78385838b0a745d4455adbb458cc7d1d": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "path",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "content",
+          "ordinal": 2,
+          "type_info": "Bytea"
+        },
+        {
+          "name": "size",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "extension",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tselect files.id\n    \t\t\t\t , files.path\n    \t\t\t\t , files.content\n    \t\t\t\t , files.size\n    \t\t\t\t , files.extension\n    \t\t\t\t , files.created_at\n    \t\t\t  from sites\n\n    \t\t\t  join branches on branches.site_id = sites.id\n\n    \t\t\t  join deployments on deployments.branch_id = branches.id\n    \t\t\t                  and deployments.version = branches.version\n\n    \t\t\t  join files on files.deployment_id = deployments.id\n\n    \t\t\t where sites.slug = $1\n    \t\t\t   and branches.slug = $2\n    \t\t\t   and files.path = $3\n    \t\t"
+  },
+  "f6810f14bd4cff1efbdf337108d30344f3088ebadd828f8e75b8b468bffddfc9": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "slug",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "version",
+          "ordinal": 3,
+          "type_info": "Int2"
+        },
+        {
+          "name": "site_id",
+          "ordinal": 4,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 6,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 7,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            \twith set_complete as (\n\t    \t\t\tupdate deployments\n\t    \t\t\t   set status = $2\n\t    \t\t\t where id = $1\n\t    \t\t\treturning branch_id, version\n            \t)\n            \tupdate branches\n            \t   set version = set_complete.version\n            \t  from set_complete\n            \t where branches.id = set_complete.branch_id\n            \treturning branches.id\n            \t\t\t, branches.slug\n            \t\t\t, branches.name\n            \t\t\t, branches.version\n            \t\t\t, branches.site_id\n            \t\t\t, branches.created_at\n            \t\t\t, branches.updated_at\n            \t\t\t, branches.is_public\n    \t\t"
+  },
+  "f8f81128572e2b467520c0846b69ce81fa75e29b48df8d9ff9552a2971f97c6c": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tdelete from sites\n    \t\t\t where id = $1\n    \t\t"
+  },
+  "faeb9dcdaa135fb8af56e916dd417cc83787bb25b9d8fcf952870736a081f824": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "slug",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n\t\t\t\tselect id, name, slug, updated_at, created_at\n\t\t\t\t  from sites\n\t\t\t\t where id = $1\n\t\t\t"
+  },
+  "fe869e2adf8923014adf9ec743c4b4e59436c883f67c1ceb883be840ead99496": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "slug",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "version",
+          "ordinal": 3,
+          "type_info": "Int2"
+        },
+        {
+          "name": "site_id",
+          "ordinal": 4,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 6,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 7,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n    \t\t\tinsert into branches(site_id, name, slug, version)\n    \t\t\tvalues($1, $2, $3, 1)\n    \t\t\treturning id, slug, name, version, site_id, created_at, updated_at, is_public\n    \t\t"
+  }
+}

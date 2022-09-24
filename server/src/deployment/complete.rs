@@ -1,11 +1,12 @@
 use crate::branch::data::Branch;
-use crate::db::Db;
 use crate::deployment::data::Deployment;
+use crate::error::ApiError;
+use crate::{auth::Auth, ApiResult};
 
-use rocket::http::Status;
 use rocket::serde::json::Json;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use werkbank::rocket::Db;
 
 #[derive(Deserialize, Serialize)]
 pub struct Payload {
@@ -13,9 +14,9 @@ pub struct Payload {
 }
 
 #[post("/complete", data = "<body>")]
-pub async fn handler(pool: Db<'_>, body: Json<Payload>) -> Result<Json<Branch>, Status> {
-    Deployment::complete(pool.inner(), &body.deployment)
+pub async fn handler(pool: Db, body: Json<Payload>, _auth: Auth) -> ApiResult<Branch> {
+    Deployment::complete(&pool, &body.deployment)
         .await
         .map(Json)
-        .map_err(|_| Status::InternalServerError)
+        .map_err(ApiError::from)
 }

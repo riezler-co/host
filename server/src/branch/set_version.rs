@@ -1,10 +1,11 @@
 use crate::branch::data::Branch;
-use crate::db::Db;
+use crate::error::ApiError;
+use crate::{auth::Auth, ApiResult};
 
-use rocket::http::Status;
 use rocket::serde::json::Json;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use werkbank::rocket::Db;
 
 #[derive(Deserialize)]
 pub struct Payload {
@@ -18,10 +19,10 @@ pub struct Response {
 }
 
 #[post("/set_version", data = "<body>")]
-pub async fn handler(pool: Db<'_>, body: Json<Payload>) -> Result<Json<Response>, Status> {
-    Branch::set_version(pool.inner(), &body.branch, body.version)
+pub async fn handler(pool: Db, body: Json<Payload>, _auth: Auth) -> ApiResult<Response> {
+    Branch::set_version(&pool, &body.branch, body.version)
         .await
         .map(|version| Response { version })
         .map(Json)
-        .map_err(|_| Status::InternalServerError)
+        .map_err(ApiError::from)
 }

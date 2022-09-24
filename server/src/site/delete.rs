@@ -1,10 +1,12 @@
-use crate::db::Db;
+use crate::auth::Auth;
+use crate::error::ApiError;
 use crate::site::data::Site;
+use crate::ApiResult;
 
-use rocket::http::Status;
 use rocket::serde::json::Json;
 use serde::Deserialize;
 use uuid::Uuid;
+use werkbank::rocket::Db;
 
 #[derive(Deserialize)]
 pub struct Payload {
@@ -12,10 +14,9 @@ pub struct Payload {
 }
 
 #[post("/delete", data = "<body>")]
-pub async fn handler(pool: Db<'_>, body: Json<Payload>) -> Result<(), Status> {
-    Site::delete(pool.inner(), &body.id)
+pub async fn handler(pool: Db, body: Json<Payload>, _auth: Auth) -> ApiResult<()> {
+    Site::delete(&pool, &body.id)
         .await
-        .map_err(|_| Status::InternalServerError)?;
-
-    Ok(())
+        .map(Json)
+        .map_err(ApiError::from)
 }

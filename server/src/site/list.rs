@@ -1,13 +1,12 @@
-use crate::db::Db;
+use crate::auth::Auth;
+use crate::error::ApiError;
 use crate::site::data::Site;
+use crate::ApiResult;
 
-use rocket::http::Status;
 use rocket::serde::json::Json;
+use werkbank::rocket::Db;
 
 #[get("/list")]
-pub async fn handler(pool: Db<'_>) -> Result<Json<Vec<Site>>, Status> {
-    Site::list(pool.inner())
-        .await
-        .map(Json)
-        .map_err(|_| Status::InternalServerError)
+pub async fn handler(pool: Db, _auth: Auth) -> ApiResult<Vec<Site>> {
+    Site::list(&pool).await.map(Json).map_err(ApiError::from)
 }

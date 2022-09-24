@@ -1,13 +1,15 @@
-use crate::db::Db;
+use crate::auth::Auth;
+use crate::error::ApiError;
 use crate::site::data::{NewSite, Site};
+use crate::ApiResult;
 
-use rocket::http::Status;
 use rocket::serde::json::Json;
+use werkbank::rocket::Db;
 
 #[post("/create", data = "<body>")]
-pub async fn handler(pool: Db<'_>, body: Json<NewSite>) -> Result<Json<Site>, Status> {
-    Site::create(pool.inner(), &body.into_inner())
+pub async fn handler(pool: Db, body: Json<NewSite>, _auth: Auth) -> ApiResult<Site> {
+    Site::create(&pool, &body.into_inner())
         .await
         .map(Json)
-        .map_err(|_| Status::InternalServerError)
+        .map_err(ApiError::from)
 }

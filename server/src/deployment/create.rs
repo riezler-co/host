@@ -1,13 +1,15 @@
+use crate::auth::Auth;
 use crate::branch::data::{Branch, NewBranch};
-use crate::db::Db;
 use crate::deployment::data::{Deployment, NewDeployment};
+use crate::error::ApiError;
+use crate::ApiResult;
 
-use rocket::http::Status;
 use rocket::serde::json::Json;
 use slug::slugify;
+use werkbank::rocket::Db;
 
 #[post("/create", data = "<body>")]
-pub async fn handler(pool: Db<'_>, body: Json<NewDeployment>) -> Result<Json<Deployment>, Status> {
+pub async fn handler(pool: Db, body: Json<NewDeployment>, _auth: Auth) -> ApiResult<Deployment> {
     let deployment = body.into_inner();
     let site = slugify(&deployment.site);
 
@@ -16,12 +18,10 @@ pub async fn handler(pool: Db<'_>, body: Json<NewDeployment>) -> Result<Json<Dep
         slug: slugify(&deployment.branch),
     };
 
-    let branch = Branch::create_deployment(pool.inner(), &site, branch)
-        .await
-        .map_err(|_| Status::InternalServerError)?;
+    let branch = Branch::create_deployment(&pool, &site, branch).await?;
 
-    Deployment::create(pool.inner(), &branch.id, deployment.config)
+    Deployment::create(&pool, &branch.id, deployment.config)
         .await
         .map(Json)
-        .map_err(|_| Status::InternalServerError)
+        .map_err(ApiError::from)
 }
